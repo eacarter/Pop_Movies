@@ -1,7 +1,7 @@
 package com.appsolutions.vectorformandroidchallenge.Util;
 
 
-public class MovieModel {
+public class MovieModel  {
 
     String title;
     String id;

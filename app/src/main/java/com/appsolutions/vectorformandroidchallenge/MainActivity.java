@@ -1,6 +1,7 @@
 package com.appsolutions.vectorformandroidchallenge;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
@@ -29,9 +30,10 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
+
 public class MainActivity extends AppCompatActivity {
     RecyclerView mRecyclerView;
-    CardAdapter mAdapter;
+    CardAdapter mCardAdapter;
     LinearLayoutManager mLayoutManager;
     ProgressBar progressBar;
     ArrayList<MovieModel> movies = new ArrayList<>();
@@ -43,43 +45,54 @@ public class MainActivity extends AppCompatActivity {
 
         progressBar = (ProgressBar) findViewById(R.id.progressBar_cyclic);
 
-        mAdapter = new CardAdapter(movies);
-        mRecyclerView = (RecyclerView) findViewById(R.id.recycleView);
-        mRecyclerView.setHasFixedSize(true);
-        mLayoutManager = new LinearLayoutManager(this);
-        mRecyclerView.setLayoutManager(mLayoutManager);
-        mLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+        progressBar.setVisibility(View.VISIBLE);
 
-        if (movies.size() > 0 & mRecyclerView != null) {
-            mRecyclerView.setAdapter(mAdapter);
-        }
-        mRecyclerView.setLayoutManager(mLayoutManager);
-
-        mRecyclerView.setAdapter(mAdapter);
-
-        mRecyclerView.addOnItemTouchListener(
-                new RecyclerItemClickListener(this, mRecyclerView ,new RecyclerItemClickListener.OnItemClickListener() {
-                    @Override public void onItemClick(View view, int position) {
-
-                        MovieModel movieModel = movies.get(position);
-
-                        Fragment fragment = SelectFragment.newInstance(movieModel.getOverview(),
-                                movieModel.getPoster());
-                        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-                        transaction.replace(R.id.container, fragment);
-                        transaction.addToBackStack(null);
-                        transaction.commit();
-                    }
-
-                    @Override public void onLongItemClick(View view, int position) { }
-                })
-        );
-    }
-
-    @Override
-    public void onStart(){
-        super.onStart();
         JsonRequester();
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+
+                mCardAdapter = new CardAdapter(movies);
+                mRecyclerView = (RecyclerView) findViewById(R.id.recycleView);
+
+                mRecyclerView.setHasFixedSize(true);
+                mLayoutManager = new LinearLayoutManager(MainActivity.this);
+                mRecyclerView.setLayoutManager(mLayoutManager);
+                mLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+
+                if (movies.size() > 0 & mRecyclerView != null) {
+                    mRecyclerView.setAdapter(mCardAdapter);
+                }
+                mRecyclerView.setLayoutManager(mLayoutManager);
+
+                mRecyclerView.setAdapter(mCardAdapter);
+
+                mRecyclerView.addOnItemTouchListener(
+                        new RecyclerItemClickListener(MainActivity.this, mRecyclerView, new RecyclerItemClickListener.OnItemClickListener() {
+                            @Override
+                            public void onItemClick(View view, int position) {
+
+                                MovieModel movieModel = movies.get(position);
+
+                                Fragment fragment = SelectFragment.newInstance(movieModel.getOverview(),
+                                        movieModel.getPoster());
+                                FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+                                transaction.replace(R.id.container, fragment);
+                                transaction.addToBackStack(null);
+                                transaction.commit();
+                            }
+
+                            @Override
+                            public void onLongItemClick(View view, int position) {
+                            }
+                        })
+                );
+
+                progressBar.setVisibility(View.GONE);
+                mRecyclerView.setVisibility(View.VISIBLE);
+            }
+        }, 5000);
     }
 
     @Override
@@ -108,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
     public void JsonRequester() {
 
 
-    String url = "https://api.themoviedb.org/3/movie/popular?api_key=e6dfd67cca79e834c3c68f729e937f64&language=en-US&page=1";
+        String url = "https://api.themoviedb.org/3/movie/popular?api_key=e6dfd67cca79e834c3c68f729e937f64&language=en-US&page=1";
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(url, null, new Response.Listener<JSONObject>() {
             @Override
@@ -118,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
 
                     JSONArray results = response.getJSONArray("results");
 
-                    for (int i = 0; i <= results.length()-1; i++){
+                    for (int i = 0; i <= results.length() - 1; i++) {
                         MovieModel item = new MovieModel();
                         JSONObject jsonObject = results.getJSONObject(i);
                         item.setId(jsonObject.getString("id"));
@@ -132,15 +145,12 @@ public class MainActivity extends AppCompatActivity {
                         movies.add(item);
                     }
 
-                    progressBar.setVisibility(View.GONE);
+                } catch (JSONException e) {
 
-                }
-                catch (JSONException e){
-                    progressBar.setVisibility(View.GONE);
                 }
 
             }
-        }, new Response.ErrorListener(){
+        }, new Response.ErrorListener() {
 
             @Override
             public void onErrorResponse(VolleyError error) {
@@ -155,4 +165,6 @@ public class MainActivity extends AppCompatActivity {
 
         AppSingleton.getInstance(this).addToRequestQueue(jsonObjectRequest);
     }
+
 }
+
